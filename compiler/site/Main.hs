@@ -17,6 +17,7 @@ import Rules (rules)
 data Command
   = Build
   | Clean
+  | Rebuild
   | Check Cmd.Check
 
 parseCheck :: O.Parser Cmd.Check
@@ -31,17 +32,19 @@ parseCommand =
   O.subparser $
   O.command "build" (O.info (pure Build) (O.progDesc "Build the site")) <>
   O.command "clean" (O.info (pure Clean) (O.progDesc "Clean")) <>
+  O.command "rebuild" (O.info (pure Rebuild) (O.progDesc "Clean build")) <>
   O.command
     "check"
     (O.info ((Check <$> parseCheck) <**> O.helper) (O.progDesc "Check links"))
 
-data Options = Options
-  { verbose :: Bool
-  , outDir :: FilePath
-  , srcDir :: FilePath
-  , cacheDir :: FilePath
-  , command :: Command
-  }
+data Options =
+  Options
+    { verbose :: Bool
+    , outDir :: FilePath
+    , srcDir :: FilePath
+    , cacheDir :: FilePath
+    , command :: Command
+    }
 
 parseOptions :: O.Parser Options
 parseOptions =
@@ -83,4 +86,5 @@ main = do
   case command opts of
     Build -> Cmd.build conf log rules >>= exitWith
     Clean -> Cmd.clean conf log
+    Rebuild -> Cmd.clean conf log >> Cmd.build conf log rules >>= exitWith
     Check chk -> Cmd.check conf log chk >>= exitWith
